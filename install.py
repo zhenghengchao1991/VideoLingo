@@ -7,7 +7,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from rich.console import Console
 from rich.panel import Panel
 from rich.box import DOUBLE
-from InquirerPy import inquirer # <--- 确保这一行导入存在且没有被注释掉
+# from InquirerPy import inquirer # <--- 不再需要，已删除
 from translations.translations import translate as t
 from translations.translations import DISPLAY_LANGUAGES # 仍然需要这个
 from core.config_utils import load_key, update_key # 仍然需要这个
@@ -87,37 +87,38 @@ def install_noto_font():
     # Detect Linux distribution type
     if os.path.exists('/etc/debian_version'):
         # Debian/Ubuntu systems
-        cmd = ['sudo', 'apt-get', 'update', '&&', 'sudo', 'apt-get', 'install', '-y', 'fonts-noto']
+        # 注意：直接运行 sudo 需要用户交互输入密码，或者配置了免密sudo。
+        # 对于自动化脚本，通常不建议直接包含 sudo。但这里保持原逻辑，用户需要能执行sudo。
+        cmd = ['sudo', 'apt-get', 'update', '&&', 'sudo', 'apt-get', 'install', '-y', 'fonts-noto-cjk'] # 使用 fonts-noto-cjk 通常更全
         pkg_manager = "apt-get"
     elif os.path.exists('/etc/redhat-release'):
         # RHEL/CentOS/Fedora systems
-        cmd = ['sudo', 'yum', 'install', '-y', 'google-noto-sans-cjk-ttc-fonts'] # 包名可能不同
+        cmd = ['sudo', 'yum', 'install', '-y', 'google-noto-sans-cjk-ttc-fonts']
         pkg_manager = "yum"
     else:
-        console.print("Warning: Unrecognized Linux distribution, please install Noto fonts manually", style="yellow")
+        console.print("Warning: Unrecognized Linux distribution, please install Noto fonts manually (e.g., fonts-noto-cjk)", style="yellow")
         return
 
     console.print(f"Attempting to install Noto fonts using {pkg_manager}...")
     try:
-        # 在Linux上，通常需要root权限来安装字体
-        # 使用 subprocess.run 而不是 check_call 来获取更详细的错误信息
-        result = subprocess.run(cmd, capture_output=True, text=True, check=False) # check=False 允许我们检查 returncode
+        # 执行命令（需要用户有sudo权限）
+        result = subprocess.run(" ".join(cmd), shell=True, capture_output=True, text=True, check=False) # 使用 shell=True 处理 &&
         if result.returncode == 0:
             console.print(f"✅ Successfully installed Noto fonts using {pkg_manager}", style="green")
         else:
             console.print(f"❌ Failed to install Noto fonts using {pkg_manager}. Error code: {result.returncode}", style="red")
             console.print(f"Stderr:\n{result.stderr}", style="red")
-            console.print("Please try installing Noto fonts manually (e.g., 'sudo apt install fonts-noto' or 'sudo yum install google-noto-sans-cjk-ttc-fonts').", style="yellow")
+            console.print("Please try installing Noto fonts manually (e.g., 'sudo apt install fonts-noto-cjk' or 'sudo yum install google-noto-sans-cjk-ttc-fonts').", style="yellow")
     except FileNotFoundError:
-         console.print(f"❌ Command '{cmd[0]}' not found. Is '{pkg_manager}' installed and in your PATH? Please install Noto fonts manually.", style="red")
+         console.print(f"❌ Command 'sudo' or '{pkg_manager}' not found. Is it installed and in your PATH? Please install Noto fonts manually.", style="red")
     except Exception as e:
          console.print(f"❌ An unexpected error occurred during font installation: {e}", style="red")
-
 
 def main():
     # 确保首先安装基础包
     try:
-        install_package("requests", "rich", "ruamel.yaml", "InquirerPy")
+        # InquirerPy 可能不再需要，但 ruamel.yaml, requests, rich 仍然需要
+        install_package("requests", "rich", "ruamel.yaml")
     except subprocess.CalledProcessError as e:
         print(f"Error installing base packages: {e}")
         sys.exit(1)
@@ -135,63 +136,54 @@ def main():
     console.print(welcome_panel)
 
     # --- 语言选择部分 ---
-    # # Language selection (注释掉原来的交互式选择)
-    # current_language = load_key("display_language")
-    # # Find the display name for current language code
-    # current_display = next((k for k, v in DISPLAY_LANGUAGES.items() if v == current_language), "🇬🇧 English")
-    # selected_language = DISPLAY_LANGUAGES[inquirer.select(
-    #     message="Select language / 选择语言 / 選擇語言 / 言語を選択 / Seleccionar idioma / Sélectionner la langue / Выберите язык:",
-    #     choices=list(DISPLAY_LANGUAGES.keys()),
-    #     default=current_display
-    # ).execute()]
-
-    # 直接设置语言为简体中文
+    # Directly set language to Simplified Chinese
     selected_language = "zh-CN"
-    console.print(f"Default language automatically set to: {selected_language}") # 添加提示信息
+    console.print(f"Default language automatically set to: {selected_language}")
 
-    # 保留更新配置文件的代码
+    # Update config file
     try:
         update_key("display_language", selected_language)
     except Exception as e:
-        console.print(f"Error updating config file: {e}", style="red")
-        # 可以选择在这里退出，或者继续但配置文件可能不是预期的
+        console.print(f"Error updating config file with language: {e}", style="red")
+        # Decide whether to exit or continue
         # sys.exit(1)
-
     # --- 语言选择部分修改结束 ---
 
     console.print(Panel.fit(t("🚀 Starting Installation"), style="bold magenta"))
 
-    # Configure mirrors
-    # 仍然保留询问是否配置镜像的功能
-    try:
-        if inquirer.confirm(
-            message=t("Do you need to auto-configure PyPI mirrors? (Recommended if you have difficulty accessing pypi.org)"),
-            default=True
-        ).execute():
-            choose_mirror()
-    except Exception as e:
-        console.print(f"Error during mirror configuration prompt: {e}", style="yellow")
-        console.print("Skipping mirror configuration.", style="yellow")
+    # --- 修改镜像配置部分 ---
+    # # Configure mirrors (注释掉原来的交互式选择)
+    # try:
+    #     if inquirer.confirm(
+    #         message=t("Do you need to auto-configure PyPI mirrors? (Recommended if you have difficulty accessing pypi.org)"),
+    #         default=True # 原默认值为 True
+    #     ).execute():
+    #         choose_mirror()
+    # except Exception as e:
+    #     console.print(f"Error during mirror configuration prompt: {e}", style="yellow")
+    #     console.print("Skipping mirror configuration.", style="yellow")
+
+    # 直接跳过镜像配置
+    console.print("Skipping PyPI mirror auto-configuration by default.")
+    # --- 镜像配置部分修改结束 ---
 
     # Detect system and GPU
     has_gpu = platform.system() != 'Darwin' and check_nvidia_gpu()
     pytorch_cmd = []
     if has_gpu:
         console.print(Panel(t("🎮 NVIDIA GPU detected, installing CUDA version of PyTorch..."), style="cyan"))
-        # 使用适合 WhisperX 和 Demucs 的 PyTorch 版本 (例如 2.0.0 + cu118)
         pytorch_cmd = ["torch==2.0.0", "torchaudio==2.0.0", "--index-url", "https://download.pytorch.org/whl/cu118"]
     else:
         system_name = "🍎 MacOS" if platform.system() == 'Darwin' else "💻 No NVIDIA GPU"
         console.print(Panel(t(f"{system_name} detected, installing CPU version of PyTorch... Note: it might be slow during whisperX transcription."), style="cyan"))
-        # CPU 版本也建议使用兼容的版本
-        pytorch_cmd = ["torch==2.1.2", "torchaudio==2.1.2"] # 或者其他兼容的CPU版本
+        pytorch_cmd = ["torch==2.1.2", "torchaudio==2.1.2"]
 
     if pytorch_cmd:
         try:
             install_package(*pytorch_cmd)
         except subprocess.CalledProcessError as e:
             console.print(Panel(f"❌ Failed to install PyTorch: {e}", style="red"))
-            sys.exit(1) # 安装失败则退出
+            sys.exit(1)
 
     def install_requirements():
         console.print(Panel(t("Installing requirements using `pip install -r requirements.txt`"), style="cyan"))
@@ -203,7 +195,7 @@ def main():
                 "install",
                 "-r",
                 "requirements.txt"
-            ], env={**os.environ, "PIP_NO_CACHE_DIR": "1", "PYTHONIOENCODING": "utf-8"}) # 确保使用UTF-8
+            ], env={**os.environ, "PIP_NO_CACHE_DIR": "1", "PYTHONIOENCODING": "utf-8"})
             console.print("✅ Requirements installed successfully.", style="green")
         except subprocess.CalledProcessError as e:
             console.print(Panel(t("❌ Failed to install requirements:") + f"\n{e}", style="red"))
@@ -221,7 +213,7 @@ def main():
     panel1_text = (
         t("Installation completed") + "\n\n" +
         t("Now I will run this command to start the application:") + "\n" +
-        "[bold]streamlit run st.py[/bold]\n\n" + # 添加换行
+        "[bold]streamlit run st.py[/bold]\n\n" +
         t("Note: First startup may take up to 1 minute")
     )
     console.print(Panel(panel1_text, style="bold green", title="Installation Complete"))
@@ -236,7 +228,6 @@ def main():
     # 自动启动应用
     console.print("\nAttempting to start the application automatically...")
     try:
-        # 使用 Popen 在后台启动，避免阻塞安装脚本
         subprocess.Popen(["streamlit", "run", "st.py"])
         console.print("✅ Application started in the background.", style="green")
     except FileNotFoundError:
