@@ -80,7 +80,7 @@ def main():
     from rich.console import Console
     from rich.panel import Panel
     from rich.box import DOUBLE
-    from InquirerPy import inquirer
+    ###from InquirerPy import inquirer
     from translations.translations import translate as t
     from translations.translations import DISPLAY_LANGUAGES
     from core.config_utils import load_key, update_key
