@@ -17,7 +17,7 @@ def page_setting():
 
     display_language = st.selectbox("Display Language 🌐", 
                                   options=list(DISPLAY_LANGUAGES.keys()),
-                                  index=list(DISPLAY_LANGUAGES.values()).index(load_key("display_language")))
+                                  index=list(DISPLAY_LANGUAGES.keys()).index("🇨🇳 简体中文"))
     if DISPLAY_LANGUAGES[display_language] != load_key("display_language"):
         update_key("display_language", DISPLAY_LANGUAGES[display_language])
         st.rerun()
