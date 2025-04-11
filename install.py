@@ -14,12 +14,12 @@ from core.config_utils import load_key, update_key # 仍然需要这个
 from core.pypi_autochoose import main as choose_mirror
 
 ascii_logo = """
-__     ___     _            _     _
-\ \   / (_) __| | ___  ___ | |   (_)_ __   __ _  ___
- \ \ / /| |/ _` |/ _ \/ _ \| |   | | '_ \ / _` |/ _ \\
-  \ V / | | (_| |  __/ (_) | |___| | | | | (_| | (_) |
-   \_/  |_|\__,_|\___|\___/|_____|_|_| |_|\__, |\___/
-                                          |___/
+__     ___     _            _     _
+\ \   / (_) __| | ___  ___ | |   (_)_ __   __ _  ___
+ \ \ / /| |/ _` |/ _ \/ _ \| |   | | '_ \ / _` |/ _ \\
+  \ V / | | (_| |  __/ (_) | |___| | | | | (_| | (_) |
+   \_/  |_|\__,_|\___|\___/|_____|_|_| |_|\__, |\___/
+                                          |___/
 """
 
 def install_package(*packages):
@@ -110,9 +110,9 @@ def install_noto_font():
             console.print(f"Stderr:\n{result.stderr}", style="red")
             console.print("Please try installing Noto fonts manually (e.g., 'sudo apt install fonts-noto-cjk' or 'sudo yum install google-noto-sans-cjk-ttc-fonts').", style="yellow")
     except FileNotFoundError:
-         console.print(f"❌ Command 'sudo' or '{pkg_manager}' not found. Is it installed and in your PATH? Please install Noto fonts manually.", style="red")
+        console.print(f"❌ Command 'sudo' or '{pkg_manager}' not found. Is it installed and in your PATH? Please install Noto fonts manually.", style="red")
     except Exception as e:
-         console.print(f"❌ An unexpected error occurred during font installation: {e}", style="red")
+        console.print(f"❌ An unexpected error occurred during font installation: {e}", style="red")
 
 def main():
     # 确保首先安装基础包
@@ -154,36 +154,38 @@ def main():
     # --- 修改镜像配置部分 ---
     # # Configure mirrors (注释掉原来的交互式选择)
     # try:
-    #     if inquirer.confirm(
-    #         message=t("Do you need to auto-configure PyPI mirrors? (Recommended if you have difficulty accessing pypi.org)"),
-    #         default=True # 原默认值为 True
-    #     ).execute():
-    #         choose_mirror()
+    #    if inquirer.confirm(
+    #        message=t("Do you need to auto-configure PyPI mirrors? (Recommended if you have difficulty accessing pypi.org)"),
+    #        default=True # 原默认值为 True
+    #    ).execute():
+    #        choose_mirror()
     # except Exception as e:
-    #     console.print(f"Error during mirror configuration prompt: {e}", style="yellow")
-    #     console.print("Skipping mirror configuration.", style="yellow")
+    #    console.print(f"Error during mirror configuration prompt: {e}", style="yellow")
+    #    console.print("Skipping mirror configuration.", style="yellow")
 
     # 直接跳过镜像配置
     console.print("Skipping PyPI mirror auto-configuration by default.")
     # --- 镜像配置部分修改结束 ---
 
     # Detect system and GPU
-    has_gpu = platform.system() != 'Darwin' and check_nvidia_gpu()
-    pytorch_cmd = []
-    if has_gpu:
-        console.print(Panel(t("🎮 NVIDIA GPU detected, installing CUDA version of PyTorch..."), style="cyan"))
-        pytorch_cmd = ["torch==2.0.0", "torchaudio==2.0.0", "--index-url", "https://download.pytorch.org/whl/cu118"]
-    else:
-        system_name = "🍎 MacOS" if platform.system() == 'Darwin' else "💻 No NVIDIA GPU"
-        console.print(Panel(t(f"{system_name} detected, installing CPU version of PyTorch... Note: it might be slow during whisperX transcription."), style="cyan"))
-        pytorch_cmd = ["torch==2.1.2", "torchaudio==2.1.2"]
+    has_gpu = False
+    console.print("⚠️ Skipping GPU check.", style="yellow")
+    # pytorch_cmd = []
+    # if has_gpu:
+    #     console.print(Panel(t("🎮 NVIDIA GPU detected, installing CUDA version of PyTorch..."), style="cyan"))
+    #     pytorch_cmd = ["torch==2.0.0", "torchaudio==2.0.0", "--index-url", "https://download.pytorch.org/whl/cu118"]
+    # else:
+    #     system_name = "🍎 MacOS" if platform.system() == 'Darwin' else "💻 No NVIDIA GPU"
+    #     console.print(Panel(t(f"{system_name} detected, installing CPU version of PyTorch... Note: it might be slow during whisperX transcription."), style="cyan"))
+    #     pytorch_cmd = ["torch==2.1.2", "torchaudio==2.1.2"]
 
-    if pytorch_cmd:
-        try:
-            install_package(*pytorch_cmd)
-        except subprocess.CalledProcessError as e:
-            console.print(Panel(f"❌ Failed to install PyTorch: {e}", style="red"))
-            sys.exit(1)
+    # if pytorch_cmd:
+    #     try:
+    #         install_package(*pytorch_cmd)
+    #     except subprocess.CalledProcessError as e:
+    #         console.print(Panel(f"❌ Failed to install PyTorch: {e}", style="red"))
+    #         sys.exit(1)
+    console.print("⚠️ Skipping automatic PyTorch download.", style="yellow")
 
     def install_requirements():
         console.print(Panel(t("Installing requirements using `pip install -r requirements.txt`"), style="cyan"))
