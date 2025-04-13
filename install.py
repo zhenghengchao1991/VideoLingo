@@ -77,14 +77,8 @@ def main():
 
     console.print(Panel.fit(t("🚀 Starting Installation"), style="bold magenta"))
 
-    # Configure mirrors
-    # add a check to ask user if they want to configure mirrors
-    if inquirer.confirm(
-        message=t("Do you need to auto-configure PyPI mirrors? (Recommended if you have difficulty accessing pypi.org)"),
-        default=True
-    ).execute():
-        from core.pypi_autochoose import main as choose_mirror
-        choose_mirror()
+    # Skipping mirror configuration as per requirement
+    # No longer asking user if they want to configure mirrors
 
     def install_requirements():
         try:
